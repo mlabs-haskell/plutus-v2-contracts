@@ -1,0 +1,8 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:plutus-v2-contracts"
+
+    - path: "./app"
+      component: "exe:mk-plutus-v2-contracts"
+

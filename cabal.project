@@ -1,0 +1,10 @@
+index-state: 2022-02-18T00:00:00Z
+
+packages: ./.
+
+tests: true
+benchmarks: true
+allow-newer:
+  *:aeson,
+  monoidal-containers:aeson,
+  size-based:template-haskell
