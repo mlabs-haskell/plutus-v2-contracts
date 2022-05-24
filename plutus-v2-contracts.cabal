@@ -71,7 +71,10 @@ common common-lang
 
 library
   import:          common-lang
-  exposed-modules: Plutus.V2.SchnorrValidator
+  exposed-modules:
+    Plutus.V2.EcdsaSecp256k1Validator
+    Plutus.V2.SchnorrSecp256k1Validator
+
   build-depends:
     , bytestring
     , cardano-api
@@ -87,14 +90,17 @@ executable mk-plutus-v2-contracts
   import:         common-lang
   main-is:        Main.hs
   build-depends:
+    , base16-bytestring
     , bytestring
     , cardano-api
+    , cardano-crypto-class
     , cardano-ledger-alonzo
     , plutus-core
     , plutus-ledger-api
     , plutus-tx
     , plutus-tx-plugin
     , plutus-v2-contracts
+    , secp256k1-haskell
     , serialise
 
   hs-source-dirs: app

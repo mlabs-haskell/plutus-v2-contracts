@@ -113,9 +113,6 @@
         };
       nixpkgsFor' = system: import nixpkgs { inherit system; };
 
-      cabalProjectLocal = ''
-        allow-newer: size-based:template-haskell
-      '';
 
       haskellModules = [
         ({ pkgs, ... }:
@@ -297,7 +294,7 @@
         in
         pkgs.haskell-nix.cabalProject' {
           src = ./.;
-          inherit cabalProjectLocal extraSources;
+          inherit extraSources;
           name = "plutus-v2-contracts";
           compiler-nix-name = "ghc8107";
           shell = {
@@ -312,6 +309,10 @@
               hlint
               fd
               nixpkgs-fmt
+            ];
+            additional = ps: [
+              ps.cardano-node
+              ps.plutus-tx-plugin
             ];
           };
           modules = haskellModules;
@@ -334,13 +335,13 @@
 
     in
     {
-      inherit cabalProjectLocal extraSources haskellModules;
+      inherit extraSources haskellModules;
 
       project = perSystem projectFor;
       flake = perSystem (system: (projectFor system).flake { });
 
       defaultPackage = perSystem (system:
-        let lib = "plutus-v2-contracts:lib:plutus-v2-contracts";
+        let lib = "plutus-v2-contracts:exe:mk-plutus-v2-contracts";
         in self.flake.${system}.packages.${lib});
 
       packages = perSystem (system: self.flake.${system}.packages);
