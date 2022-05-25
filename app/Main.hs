@@ -58,34 +58,40 @@ main = do
 
 writeEcdsaSecp256k1Script :: IO ()
 writeEcdsaSecp256k1Script = do
-  let vkey' = Builtins.toBuiltin $ rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkey
+  let vkey' = rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkey
+      vkey'' = Builtins.toBuiltin vkey'
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN ecdsaSig
 
   putStrLn "ECDSA secp256k1"
+  putStrLn $ "Msg: " ++ Char8.unpack (Base16.encode rawMsg)
+  putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial (vkey', msg))
+  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial vkey'' msg)
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifyEcdsaSecp256k1Signature vkey' msg (Builtins.toBuiltin sig)
+  print $ Builtins.verifyEcdsaSecp256k1Signature vkey'' msg (Builtins.toBuiltin sig)
 
 writeSchnorrSecp256k1Script :: IO ()
 writeSchnorrSecp256k1Script = do
-  let vkey' = Builtins.toBuiltin $ rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkey
+  let vkey' = rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkey
+      vkey'' = Builtins.toBuiltin vkey'
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN schnorrSig
 
   putStrLn "Schnorr secp256k1"
+  putStrLn $ "Msg: " ++ Char8.unpack (Base16.encode rawMsg)
+  putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial (vkey', msg))
+  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial vkey'' msg)
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifySchnorrSecp256k1Signature vkey' msg (Builtins.toBuiltin sig)
+  print $ Builtins.verifySchnorrSecp256k1Signature vkey'' msg (Builtins.toBuiltin sig)

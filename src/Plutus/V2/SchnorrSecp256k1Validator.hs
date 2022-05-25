@@ -10,7 +10,7 @@
 module Plutus.V2.SchnorrSecp256k1Validator where
 
 import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV2)
-import Codec.Serialise
+import Codec.Serialise (serialise)
 import Data.ByteString.Lazy qualified as LBS
 import Data.ByteString.Short qualified as SBS
 import Plutus.V1.Ledger.Api qualified as Ledger
@@ -22,12 +22,13 @@ import Prelude hiding (($), (.))
 
 {-# INLINEABLE mkValidator #-}
 mkValidator ::
-  (BuiltinByteString, BuiltinByteString) ->
+  BuiltinByteString ->
+  BuiltinByteString ->
   BuiltinData ->
   BuiltinData ->
   BuiltinData ->
   ()
-mkValidator (vkey, msg) _ sig _ =
+mkValidator vkey msg _ sig _ =
   case Ledger.fromBuiltinData sig of
     Nothing -> PlutusTx.Prelude.error ()
     Just sig' ->
@@ -35,16 +36,18 @@ mkValidator (vkey, msg) _ sig _ =
         then ()
         else PlutusTx.Prelude.error ()
 
-validator :: (BuiltinByteString, BuiltinByteString) -> Plutus.Validator
-validator vkeyAndMsg =
+validator :: BuiltinByteString -> BuiltinByteString -> Plutus.Validator
+validator vkey msg =
   Plutus.mkValidatorScript $
-    $$(PlutusTx.compile [||mkValidator||]) `PlutusTx.applyCode` PlutusTx.liftCode vkeyAndMsg
+    $$(PlutusTx.compile [||mkValidator||])
+      `PlutusTx.applyCode` PlutusTx.liftCode vkey
+      `PlutusTx.applyCode` PlutusTx.liftCode msg
 
-script :: (BuiltinByteString, BuiltinByteString) -> Plutus.Script
-script = Plutus.unValidatorScript . validator
+script :: BuiltinByteString -> BuiltinByteString -> Plutus.Script
+script vkey msg = Plutus.unValidatorScript $ validator vkey msg
 
-scriptShortBs :: (BuiltinByteString, BuiltinByteString) -> SBS.ShortByteString
-scriptShortBs = SBS.toShort . LBS.toStrict . serialise . script
+scriptShortBs :: BuiltinByteString -> BuiltinByteString -> SBS.ShortByteString
+scriptShortBs vkey msg = SBS.toShort $ LBS.toStrict $ serialise $ script vkey msg
 
-scriptSerial :: (BuiltinByteString, BuiltinByteString) -> PlutusScript PlutusScriptV2
-scriptSerial = PlutusScriptSerialised . scriptShortBs
+scriptSerial :: BuiltinByteString -> BuiltinByteString -> PlutusScript PlutusScriptV2
+scriptSerial vkey msg = PlutusScriptSerialised $ scriptShortBs vkey msg
