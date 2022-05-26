@@ -1,11 +1,1 @@
-{
-  "constructor": 0,
-  "fields": [
-    {
-      "bytes": "4b688df40bcedbe641ddb16ff0a1842d9c67ea1c3bf63f3e0471baa664531d1a"
-    },
-    {
-      "bytes": "ba0796739faf8b69483e27f67f70e4acbc21217b7cb5e74554939674f63ea235f39eff80ad408dd5a6d3b43d64ad8aab943c56bb818cb5be50cca6dbfd29b100"
-    }
-  ]
-}
+{"constructor":0,"fields":[{"bytes":"313233343536373839"},{"bytes":"9188ea4fc2d081ab17aa67fb65e63609c738e61a4e70bc4633555af5bbfce3d1cde375451baab1adfd7bab07263fc891bd81cf136f98e40bae993e8deb8b45e9"}]}

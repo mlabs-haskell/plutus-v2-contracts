@@ -11,7 +11,7 @@ cardano-cli transaction build \
   --tx-in-collateral $TX_IN \
   --tx-in $TX_IN \
   --tx-in $SCRIPT_TX_IN \
-  --tx-in-script-file ../${ALGO}Secp256k1.plutus \
+  --tx-in-script-file ./${ALGO}Secp256k1.plutus \
   --tx-in-datum-file ./unitDatum.json \
   --tx-in-redeemer-file ./${ALGO}Secp256k1Redeemer.json \
   --change-address $ADDR \

@@ -90,6 +90,7 @@ executable mk-plutus-v2-contracts
   import:         common-lang
   main-is:        Main.hs
   build-depends:
+    , aeson
     , base16-bytestring
     , bytestring
     , cardano-api
