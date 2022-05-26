@@ -1,3 +1,11 @@
 {
-  "bytes": "010c0c6ba2cbf2fa4687151f1bad11617c27166a9bee738acbf00328bc46128dab351619d645ce019ef5b476a2d3188fb6b99a4daab6f0ba6d767d66cbe9c226"
+  "constructor": 0,
+  "fields": [
+    {
+      "bytes": "4b688df40bcedbe641ddb16ff0a1842d9c67ea1c3bf63f3e0471baa664531d1a"
+    },
+    {
+      "bytes": "010c0c6ba2cbf2fa4687151f1bad11617c27166a9bee738acbf00328bc46128dab351619d645ce019ef5b476a2d3188fb6b99a4daab6f0ba6d767d66cbe9c226"
+    }
+  ]
 }

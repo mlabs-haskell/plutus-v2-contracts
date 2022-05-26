@@ -70,7 +70,7 @@ writeEcdsaSecp256k1Script = do
   putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial (vkey1, vkey2) msg)
+  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial (vkey1, vkey2) )
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
@@ -90,7 +90,7 @@ writeSchnorrSecp256k1Script = do
   putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial (vkey1, vkey2) msg)
+  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial (vkey1, vkey2) )
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
