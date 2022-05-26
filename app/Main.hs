@@ -18,6 +18,7 @@ import Cardano.Crypto.DSIGN.EcdsaSecp256k1 (
 import Cardano.Crypto.DSIGN.SchnorrSecp256k1 (SchnorrSecp256k1DSIGN)
 import Cardano.Crypto.Seed (mkSeedFromBytes)
 import Crypto.Secp256k1 qualified as SECP
+import Data.Bifunctor (bimap)
 import Data.ByteString qualified as ByteString
 import Data.ByteString.Base16 qualified as Base16
 import Data.ByteString.Char8 qualified as Char8
@@ -59,7 +60,7 @@ main = do
 writeEcdsaSecp256k1Script :: IO ()
 writeEcdsaSecp256k1Script = do
   let vkey' = rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkey
-      vkey'' = Builtins.toBuiltin vkey'
+      (vkey1, vkey2) = bimap Builtins.toBuiltin Builtins.toBuiltin $ ByteString.splitAt 32 vkey'
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN ecdsaSig
@@ -69,17 +70,17 @@ writeEcdsaSecp256k1Script = do
   putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial vkey'' msg)
+  result <- writeFileTextEnvelope "ecdsaSecp256k1.plutus" Nothing (EcdsaSecp256k1Validator.scriptSerial (vkey1, vkey2) msg)
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifyEcdsaSecp256k1Signature vkey'' msg (Builtins.toBuiltin sig)
+  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.appendByteString vkey1 vkey2) msg (Builtins.toBuiltin sig)
 
 writeSchnorrSecp256k1Script :: IO ()
 writeSchnorrSecp256k1Script = do
   let vkey' = rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkey
-      vkey'' = Builtins.toBuiltin vkey'
+      (vkey1, vkey2) = bimap Builtins.toBuiltin Builtins.toBuiltin $ ByteString.splitAt 32 vkey'
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN schnorrSig
@@ -89,9 +90,9 @@ writeSchnorrSecp256k1Script = do
   putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
   putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
 
-  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial vkey'' msg)
+  result <- writeFileTextEnvelope "schnorrSecp256k1.plutus" Nothing (SchnorrSecp256k1Validator.scriptSerial (vkey1, vkey2) msg)
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifySchnorrSecp256k1Signature vkey'' msg (Builtins.toBuiltin sig)
+  print $ Builtins.verifySchnorrSecp256k1Signature (Builtins.appendByteString vkey1 vkey2) msg (Builtins.toBuiltin sig)

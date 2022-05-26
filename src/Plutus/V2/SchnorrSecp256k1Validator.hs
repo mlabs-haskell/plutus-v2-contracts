@@ -22,32 +22,32 @@ import Prelude hiding (($), (.))
 
 {-# INLINEABLE mkValidator #-}
 mkValidator ::
-  BuiltinByteString ->
+  (BuiltinByteString, BuiltinByteString) ->
   BuiltinByteString ->
   BuiltinData ->
   BuiltinData ->
   BuiltinData ->
   ()
-mkValidator vkey msg _ sig _ =
+mkValidator (vkey1, vkey2) msg _ sig _ =
   case Ledger.fromBuiltinData sig of
     Nothing -> PlutusTx.Prelude.error ()
     Just sig' ->
-      if Builtins.verifySchnorrSecp256k1Signature vkey msg sig'
+      if Builtins.verifySchnorrSecp256k1Signature (Builtins.appendByteString vkey1 vkey2) msg sig'
         then ()
         else PlutusTx.Prelude.error ()
 
-validator :: BuiltinByteString -> BuiltinByteString -> Plutus.Validator
+validator :: (BuiltinByteString, BuiltinByteString) -> BuiltinByteString -> Plutus.Validator
 validator vkey msg =
   Plutus.mkValidatorScript $
     $$(PlutusTx.compile [||mkValidator||])
       `PlutusTx.applyCode` PlutusTx.liftCode vkey
       `PlutusTx.applyCode` PlutusTx.liftCode msg
 
-script :: BuiltinByteString -> BuiltinByteString -> Plutus.Script
+script :: (BuiltinByteString, BuiltinByteString) -> BuiltinByteString -> Plutus.Script
 script vkey msg = Plutus.unValidatorScript $ validator vkey msg
 
-scriptShortBs :: BuiltinByteString -> BuiltinByteString -> SBS.ShortByteString
+scriptShortBs :: (BuiltinByteString, BuiltinByteString) -> BuiltinByteString -> SBS.ShortByteString
 scriptShortBs vkey msg = SBS.toShort $ LBS.toStrict $ serialise $ script vkey msg
 
-scriptSerial :: BuiltinByteString -> BuiltinByteString -> PlutusScript PlutusScriptV2
+scriptSerial :: (BuiltinByteString, BuiltinByteString) -> BuiltinByteString -> PlutusScript PlutusScriptV2
 scriptSerial vkey msg = PlutusScriptSerialised $ scriptShortBs vkey msg
