@@ -1,3 +1,7 @@
 protocol.json
 tx.raw
 tx.signed
+ownWallet.addr
+
+ownUtxos.json
+scriptUtxos.json

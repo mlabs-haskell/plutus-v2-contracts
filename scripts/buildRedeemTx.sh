@@ -1,10 +1,17 @@
 #!/bin/sh
 ALGO=$1
-ADDR=$2
-SCRIPT_TX_IN=$3
-TX_IN=$4
+SKEY_PATH=$2
+
+ADDR=$(cat ./ownWallet.addr)
+SCRIPT_ADDR=$(cat ./${ALGO}Secp256k1.addr)
 
 cardano-cli query protocol-parameters --out-file protocol.json --testnet-magic 9
+
+cardano-cli query utxo --address $ADDR --testnet-magic 9 --out-file ownUtxos.json
+TX_IN=$(cat ownUtxos.json | jq -r "keys | .[0]")
+
+cardano-cli query utxo --address $SCRIPT_ADDR --testnet-magic 9 --out-file scriptUtxos.json
+SCRIPT_TX_IN=$(cat scriptUtxos.json | jq -r "keys | .[0]")
 
 cardano-cli transaction build \
   --babbage-era \
@@ -18,3 +25,9 @@ cardano-cli transaction build \
   --testnet-magic 9 \
   --protocol-params-file protocol.json \
   --out-file tx.raw 
+
+if [ ! -z $SKEY_PATH ]; then
+  cardano-cli transaction sign --signing-key-file $SKEY_PATH --tx-body-file tx.raw --out-file tx.signed
+
+  cardano-cli transaction submit --tx-file tx.signed --testnet-magic 9
+fi
