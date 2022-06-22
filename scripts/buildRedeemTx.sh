@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 ALGO=$1
 SKEY_PATH=$2
 

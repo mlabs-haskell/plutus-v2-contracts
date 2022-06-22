@@ -19,7 +19,6 @@ import Cardano.Crypto.DSIGN.EcdsaSecp256k1 (
 import Cardano.Crypto.DSIGN.SchnorrSecp256k1 (SchnorrSecp256k1DSIGN)
 import Cardano.Crypto.Seed (mkSeedFromBytes)
 import Crypto.Secp256k1 qualified as SECP
-import Data.Bifunctor (bimap)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Data.ByteString.Base16 qualified as Base16
@@ -58,7 +57,6 @@ writeEcdsaSecp256k1Script rawMsg = do
       ecdsaSig = signDSIGN () ecdsaMsg skey
 
       vkey' = rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkey
-      (vkey1, vkey2) = bimap Builtins.toBuiltin Builtins.toBuiltin $ ByteString.splitAt 32 vkey'
       msg = Builtins.toBuiltin hashedMsg
 
       sig = rawSerialiseSigDSIGN ecdsaSig
@@ -74,12 +72,12 @@ writeEcdsaSecp256k1Script rawMsg = do
     writeFileTextEnvelope
       "scripts/ecdsaSecp256k1.plutus"
       Nothing
-      (EcdsaSecp256k1Validator.scriptSerial (vkey1, vkey2))
+      (EcdsaSecp256k1Validator.scriptSerial (Builtins.toBuiltin vkey'))
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.appendByteString vkey1 vkey2) msg sig'
+  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.toBuiltin vkey') msg sig'
 
 writeSchnorrSecp256k1Script :: ByteString -> IO ()
 writeSchnorrSecp256k1Script rawMsg = do
@@ -87,7 +85,6 @@ writeSchnorrSecp256k1Script rawMsg = do
       schnorrSig = signDSIGN () rawMsg skey
 
       vkey' = rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkey
-      (vkey1, vkey2) = bimap Builtins.toBuiltin Builtins.toBuiltin $ ByteString.splitAt 32 vkey'
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN schnorrSig
@@ -102,12 +99,12 @@ writeSchnorrSecp256k1Script rawMsg = do
     writeFileTextEnvelope
       "scripts/schnorrSecp256k1.plutus"
       Nothing
-      (SchnorrSecp256k1Validator.scriptSerial (vkey1, vkey2))
+      (SchnorrSecp256k1Validator.scriptSerial (Builtins.toBuiltin vkey'))
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifySchnorrSecp256k1Signature (Builtins.appendByteString vkey1 vkey2) msg sig'
+  print $ Builtins.verifySchnorrSecp256k1Signature (Builtins.toBuiltin vkey') msg sig'
 
 writeRedeemer :: forall (a :: Type). ToData a => FilePath -> a -> IO ((Either (FileError ()) ()))
 writeRedeemer path =

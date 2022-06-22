@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 ALGO=$1
 SKEY_PATH=$2
 
@@ -10,7 +12,7 @@ TX_IN=$(cat ownUtxos.json | jq -r "keys | .[0]")
 cardano-cli transaction build \
   --babbage-era \
   --tx-in $TX_IN \
-  --tx-out $(cat ./${ALGO}Secp256k1.addr)+1000000 \
+  --tx-out $(cat ./${ALGO}Secp256k1.addr)+1017160 \
   --tx-out-datum-hash-file unitDatum.json \
   --change-address $ADDR \
   --testnet-magic 9 \
