@@ -33,11 +33,19 @@ import PlutusTx qualified
 import PlutusTx.Builtins qualified as Builtins
 import Prelude
 
-skey :: forall (a :: Type). (DSIGNAlgorithm a) => SignKeyDSIGN a
-skey = genKeyDSIGN $ mkSeedFromBytes $ ByteString.replicate 32 123
+skeyA :: forall (a :: Type). (DSIGNAlgorithm a) => SignKeyDSIGN a
+skeyA = genKeyDSIGN $ mkSeedFromBytes $ ByteString.replicate 32 123
 
-vkey :: forall (a :: Type). (DSIGNAlgorithm a) => VerKeyDSIGN a
-vkey = deriveVerKeyDSIGN skey
+skeyB :: SECP.SecKey
+-- skeyB = fromMaybe (error undefined) $ SECP.secKey $ ByteString.replicate 32 123
+skeyB =
+  "f46bf49093d585f2ea781a0bf6d83468919f547999ad91c9210256979d88eef1"
+
+vkeyA :: forall (a :: Type). (DSIGNAlgorithm a) => VerKeyDSIGN a
+vkeyA = deriveVerKeyDSIGN skeyA
+
+vkeyB :: SECP.PubKey
+vkeyB = SECP.derivePubKey skeyB
 
 main :: IO ()
 main = do
@@ -53,38 +61,48 @@ writeEcdsaSecp256k1Script rawMsg = do
   let hashedMsg = blake2b_256 rawMsg
       ecdsaMsg = fromMaybe undefined $ SECP.msg hashedMsg
 
-      ecdsaSig :: SigDSIGN EcdsaSecp256k1DSIGN
-      ecdsaSig = signDSIGN () ecdsaMsg skey
+      ecdsaSigA :: SigDSIGN EcdsaSecp256k1DSIGN
+      ecdsaSigA = signDSIGN () ecdsaMsg skeyA
 
-      vkey' = rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkey
+      ecdsaSigB = SECP.signMsg skeyB ecdsaMsg
+
+      vkeyA' = rawSerialiseVerKeyDSIGN @EcdsaSecp256k1DSIGN vkeyA
+      vkeyB' = serialisePubKey False vkeyB
+
       msg = Builtins.toBuiltin hashedMsg
 
-      sig = rawSerialiseSigDSIGN ecdsaSig
-      sig' = Builtins.toBuiltin sig
+      sigA = rawSerialiseSigDSIGN ecdsaSigA
+      sigB = SECP.getCompactSig $ SECP.exportCompactSig ecdsaSigB
+
+      sigA' = Builtins.toBuiltin sigA
+      sigB' = Builtins.toBuiltin sigB
 
   putStrLn "ECDSA secp256k1"
   putStrLn $ "Hashed msg: " ++ (Char8.unpack (Base16.encode hashedMsg))
-  putStrLn $ "Verification key: " ++ Char8.unpack (Base16.encode vkey')
-  putStrLn $ "Signature: " ++ Char8.unpack (Base16.encode sig)
+  putStrLn $ "Verification key (serialised with Cardano):\n" ++ Char8.unpack (Base16.encode vkeyA')
+  putStrLn $ "Verification key (serialised with secp256k1-haskell):\n" ++ Char8.unpack (Base16.encode vkeyB')
+  putStrLn $ "Signature (serialised with Cardano):\n" ++ Char8.unpack (Base16.encode sigA)
+  putStrLn $ "Signature (serialised with secp256k1-haskell):\n" ++ Char8.unpack (Base16.encode sigB)
 
-  _ <- writeRedeemer "scripts/ecdsaSecp256k1Redeemer.json" (PlutusTx.toBuiltinData (msg, sig'))
+  _ <- writeRedeemer "scripts/ecdsaSecp256k1Redeemer.json" (PlutusTx.toBuiltinData (msg, sigA'))
   result <-
     writeFileTextEnvelope
       "scripts/ecdsaSecp256k1.plutus"
       Nothing
-      (EcdsaSecp256k1Validator.scriptSerial (Builtins.toBuiltin vkey'))
+      (EcdsaSecp256k1Validator.scriptSerial (Builtins.toBuiltin vkeyA'))
   case result of
     Left err -> print $ displayError err
     Right () -> return ()
 
-  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.toBuiltin vkey') msg sig'
+  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.toBuiltin vkeyA') msg sigA'
+  print $ Builtins.verifyEcdsaSecp256k1Signature (Builtins.toBuiltin vkeyB') msg sigB'
 
 writeSchnorrSecp256k1Script :: ByteString -> IO ()
 writeSchnorrSecp256k1Script rawMsg = do
   let schnorrSig :: SigDSIGN SchnorrSecp256k1DSIGN
-      schnorrSig = signDSIGN () rawMsg skey
+      schnorrSig = signDSIGN () rawMsg skeyA
 
-      vkey' = rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkey
+      vkey' = rawSerialiseVerKeyDSIGN @SchnorrSecp256k1DSIGN vkeyA
       msg = Builtins.toBuiltin rawMsg
 
       sig = rawSerialiseSigDSIGN schnorrSig
@@ -112,3 +130,16 @@ writeRedeemer path =
     . scriptDataToJson ScriptDataJsonDetailedSchema
     . fromPlutusData
     . PlutusTx.toData
+
+{- | Serialise the public key using secp256k1-haskell directly
+ The first byte of the result is a flag to denote if the format is compressed or not
+-}
+serialisePubKey :: Bool -> SECP.PubKey -> ByteString
+serialisePubKey removeFlag =
+  if removeFlag
+    then
+      snd
+        . fromMaybe undefined
+        . ByteString.uncons
+        . SECP.exportPubKey False
+    else SECP.exportPubKey False

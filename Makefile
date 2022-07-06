@@ -5,8 +5,13 @@
 hoogle:
 	@ nix develop -c hoogle server --local --port 8008
 
-# Attempt the CI locally
-# TODO
+npm-install:
+	npm i
+
+# Run tests
+run:
+	echo "123456789" | cabal run mk-plutus-v2-contracts
+	npm start
 
 # Build the library with nix.
 nix-build-library:

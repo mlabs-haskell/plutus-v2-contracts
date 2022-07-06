@@ -309,6 +309,7 @@
               hlint
               fd
               nixpkgs-fmt
+              nodejs
             ];
             additional = ps: [
               ps.cardano-node
